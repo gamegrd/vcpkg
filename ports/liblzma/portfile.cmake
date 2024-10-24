@@ -1,13 +1,10 @@
-vcpkg_minimum_required(VERSION 2022-10-12) # for ${VERSION}
-vcpkg_from_sourceforge(
+vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
-    REPO lzmautils
-    FILENAME "xz-${VERSION}.tar.xz"
-    SHA512 0ef70c8803d86b731fa55bc017401609a4c2ee34244c1e561075941571c4954905b9fd65f40daf00043fc9aca7712fa8407a66d5e0097eaa834718c41dc518d5
+    REPO tukaani-project/xz
+    REF "v${VERSION}"
+    SHA512 0f814f4282c87cb74a8383199c1e55ec1bf49519daaf07f7b376cb644770b75cc9257c809b661405fcfd6cda28c54d799c67eb9e169665c35b1b87529468085e
+    HEAD_REF master
     PATCHES
-        fix_config_include.patch
-        win_output_name.patch # Fix output name on Windows. Autotool build does not generate lib prefixed libraries on windows. 
-        add_support_ios.patch # add install bundle info for support ios 
         build-tools.patch
 )
 
@@ -15,16 +12,26 @@ vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
     FEATURES
         tools BUILD_TOOLS
 )
+
+if(VCPKG_TARGET_ARCHITECTURE STREQUAL "wasm32")
+    set(WASM_OPTIONS -DCMAKE_C_BYTE_ORDER=LITTLE_ENDIAN -DCMAKE_CXX_BYTE_ORDER=LITTLE_ENDIAN)
+endif()
+
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
         ${FEATURE_OPTIONS}
+        ${WASM_OPTIONS}
         -DBUILD_TESTING=OFF
         -DCREATE_XZ_SYMLINKS=OFF
         -DCREATE_LZMA_SYMLINKS=OFF
+        -DCMAKE_MSVC_DEBUG_INFORMATION_FORMAT=   # using flags from (vcpkg) toolchain
+        -DENABLE_NLS=OFF # nls is not supported by this port, yet
     MAYBE_UNUSED_VARIABLES
+        CMAKE_MSVC_DEBUG_INFORMATION_FORMAT
         CREATE_XZ_SYMLINKS
         CREATE_LZMA_SYMLINKS
+        ENABLE_NLS
 )
 vcpkg_cmake_install()
 vcpkg_copy_pdbs()
@@ -33,7 +40,7 @@ set(exec_prefix "\${prefix}")
 set(libdir "\${prefix}/lib")
 set(includedir "\${prefix}/include")
 set(PACKAGE_URL https://tukaani.org/xz/)
-set(PACKAGE_VERSION 5.2.5)
+set(PACKAGE_VERSION "${VERSION}")
 if(NOT VCPKG_TARGET_IS_WINDOWS)
     set(PTHREAD_CFLAGS -pthread)
 endif()
@@ -59,7 +66,7 @@ file(REMOVE_RECURSE
     "${CURRENT_PACKAGES_DIR}/share/man"
 )
 
-set(TOOLS xz xzdec)
+set(TOOLS xz xzdec lzmadec lzmainfo)
 foreach(_tool IN LISTS TOOLS)
     if(NOT EXISTS "${CURRENT_PACKAGES_DIR}/bin/${_tool}${VCPKG_TARGET_EXECUTABLE_SUFFIX}")
         list(REMOVE_ITEM TOOLS ${_tool})
@@ -75,4 +82,4 @@ endif()
 
 file(COPY "${CMAKE_CURRENT_LIST_DIR}/vcpkg-cmake-wrapper.cmake" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}")
 file(COPY "${CMAKE_CURRENT_LIST_DIR}/usage" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}")
-file(INSTALL "${SOURCE_PATH}/COPYING" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}" RENAME copyright)
+vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/COPYING")

@@ -1,9 +1,11 @@
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO dbry/WavPack
-    REF 89ef99e84333534d9d43093a5264a398b5f1e14a #5.5.0
-    SHA512 6d8a46461ea1a9fab129d705dda6167332e98da27b24323cbfba1827339222956e288ca3947b9a1f513d7eb6f957548cfcef717aa5ba5c3d3e43d29f98de3879
-    HEAD_REF master
+    REF ${VERSION}
+    SHA512 7a0b00ee19a784b5a2ae40c1d86ddf47d989b0302ee32e6b2f4db828d632b877566f9bb8c1998d129b022f988966f29db05b7a2b59cefdd5b603292ea20464ec
+    PATCHES
+        CMakeLists-patch.diff
+        config-patch.diff
 )
 
 vcpkg_cmake_configure(
@@ -15,6 +17,7 @@ vcpkg_cmake_configure(
         -DWAVPACK_BUILD_WINAMP_PLUGIN=OFF
         -DBUILD_TESTING=OFF
         -DWAVPACK_BUILD_DOCS=OFF
+        -DWAVPACK_ENABLE_LIBCRYPTO=OFF
 )
 
 vcpkg_cmake_install()
@@ -31,10 +34,14 @@ file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
 
 file(INSTALL "${SOURCE_PATH}/license.txt" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}" RENAME copyright)
 
-if(WIN32 AND (NOT MINGW))
+if(VCPKG_TARGET_IS_WINDOWS AND NOT VCPKG_TARGET_IS_MINGW)
     if(VCPKG_LIBRARY_LINKAGE STREQUAL "dynamic")
-        vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/debug/lib/pkgconfig/wavpack.pc" "-lwavpack" "-lwavpackdll")
-        vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/lib/pkgconfig/wavpack.pc" "-lwavpack" "-lwavpackdll")
+        if(NOT DEFINED VCPKG_BUILD_TYPE OR VCPKG_BUILD_TYPE STREQUAL "release")
+            vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/lib/pkgconfig/wavpack.pc" "-lwavpack" "-lwavpackdll")
+        endif()
+        if(NOT DEFINED VCPKG_BUILD_TYPE OR VCPKG_BUILD_TYPE STREQUAL "debug")
+            vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/debug/lib/pkgconfig/wavpack.pc" "-lwavpack" "-lwavpackdll")
+        endif()
     endif()
 endif()
 

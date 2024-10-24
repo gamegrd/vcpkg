@@ -1,19 +1,26 @@
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO AOMediaCodec/libavif
-    REF f938f6b7dd412ffcbdab1808a265b6375dc7b037 #v0.10.1
-    SHA512 d4e01edb9891df0b0abc4a1d621287bce6ba38248a7ae458abd73c268b000557a52a5aa6be1fc715b694c8e48166aee458a371d806d5f28160c50ff653420e79
+    REF "v${VERSION}"
+    SHA512 ba72b8d02b098f361643a073361fccafd22eaac14e46dd06378d5e7acd9853538c5d166473e1de0b020de62dac25be83e42bd57ba51f675d11e2ddf155fbfa21
     HEAD_REF master
     PATCHES
         disable-source-utf8.patch
-        fix-compiler-warnings.patch
+)
+
+vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
+    FEATURES
+        aom AVIF_CODEC_AOM
+        dav1d AVIF_CODEC_DAV1D
 )
 
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
-        -DAVIF_CODEC_AOM=ON
         -DAVIF_BUILD_APPS=OFF
+        -DAVIF_BUILD_TESTS=OFF
+        -DCMAKE_DISABLE_FIND_PACKAGE_libsharpyuv=ON
+        ${FEATURE_OPTIONS}
 )
 
 vcpkg_cmake_install()
@@ -31,4 +38,4 @@ file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include"
                     "${CURRENT_PACKAGES_DIR}/debug/share")
 
 # Handle copyright
-file(INSTALL "${SOURCE_PATH}/LICENSE" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}" RENAME copyright)
+vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/LICENSE")

@@ -1,8 +1,16 @@
+if (VCPKG_TARGET_IS_EMSCRIPTEN)
+    # emscripten has built-in glfw3 library
+    set(VCPKG_BUILD_TYPE release)
+    file(INSTALL "${CMAKE_CURRENT_LIST_DIR}/glfw3Config.cmake" DESTINATION "${CURRENT_PACKAGES_DIR}/share/glfw3")
+    set(VCPKG_POLICY_EMPTY_PACKAGE enabled)
+    return()
+endif()
+
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO glfw/glfw
-    REF 7482de6071d21db77a7236155da44c172a7f6c9e     #v3.3.8
-    SHA512 ec45b620338cf36a8dbdf7aaf54d7c3a49a1be4ae1a1ef95f1531094fec670870713969bbc23476769d374c7a71d93f6540ab64c46fb5f66f4402bb2d15c7d87
+    REF ${VERSION}
+    SHA512 39ad7a4521267fbebc35d2ff0c389a56236ead5fa4bdff33db113bd302f70f5f2869ff4e6db1979512e1542813292dff5a482e94dfce231750f0746c301ae9ed
     HEAD_REF master
 )
 
@@ -15,18 +23,17 @@ if(VCPKG_TARGET_IS_LINUX)
     libglu1-mesa
     pkg-config
 
-These can be installed on Ubuntu systems via sudo apt install libxinerama-dev libxcursor-dev xorg-dev libglu1-mesa-dev pkg-config")
-else(VCPKG_TARGET_IS_OSX)
-    message(
-"GLFW3 currently requires the following libraries from the system package manager:
-    xinerama
-    xcursor
-    xorg
-    libglu1-mesa
-    pkg-config
+These can be installed on Ubuntu systems via sudo apt install libxinerama-dev libxcursor-dev xorg-dev libglu1-mesa-dev pkg-config
 
-These can be installed via brew install libxinerama-dev libxcursor-dev xorg-dev libglu1-mesa-dev pkg-config")
+Alternatively, when targeting the Wayland display server, use the packages listed in the GLFW documentation here:
+
+https://www.glfw.org/docs/3.3/compile.html#compile_deps_wayland")
 endif()
+
+vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
+    FEATURES
+    wayland         GLFW_BUILD_WAYLAND
+)
 
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
@@ -34,6 +41,9 @@ vcpkg_cmake_configure(
         -DGLFW_BUILD_EXAMPLES=OFF
         -DGLFW_BUILD_TESTS=OFF
         -DGLFW_BUILD_DOCS=OFF
+        ${FEATURE_OPTIONS}
+    MAYBE_UNUSED_VARIABLES
+        GLFW_USE_WAYLAND
 )
 
 vcpkg_cmake_install()
@@ -44,6 +54,4 @@ vcpkg_fixup_pkgconfig()
 
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
 
-file(INSTALL "${SOURCE_PATH}/LICENSE.md" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}" RENAME copyright)
-
-vcpkg_copy_pdbs()
+vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/LICENSE.md")

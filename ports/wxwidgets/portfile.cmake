@@ -1,8 +1,8 @@
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO wxWidgets/wxWidgets
-    REF 97e99707c5d2271a70cb686720b48dbf34ced496 # v3.2.1
-    SHA512 b47d3f4560f0ba24e95ce4fba0a807cc47807df57d54b70e22a34a5a15fc1e35ccedf1938203046c8950db9115ed09cb66fa1ca30b2e5f1b4c0d529a812497c4 
+    REF "v${VERSION}"
+    SHA512 0834cb1f4f2e294b721abeef659f696156b9a7474a6a770197f2295a598cce5547671634036a96739b063bb6482f5cb0092b5f704dc5ceb1c002c4e1782df197
     HEAD_REF master
     PATCHES
         install-layout.patch
@@ -12,7 +12,6 @@ vcpkg_from_github(
         fix-pcre2.patch
         gtk3-link-libraries.patch
         sdl2.patch
-        fix_include.patch
 )
 
 vcpkg_check_features(
@@ -20,6 +19,7 @@ vcpkg_check_features(
     FEATURES
         fonts   wxUSE_PRIVATE_FONTS
         media   wxUSE_MEDIACTRL
+        secretstore wxUSE_SECRETSTORE
         sound   wxUSE_SOUND
         webview wxUSE_WEBVIEW
         webview wxUSE_WEBVIEW_EDGE
@@ -70,7 +70,6 @@ vcpkg_cmake_configure(
         -DwxUSE_GLCANVAS=ON
         -DwxUSE_LIBGNOMEVFS=OFF
         -DwxUSE_LIBNOTIFY=OFF
-        -DwxUSE_SECRETSTORE=OFF
         -DwxUSE_STL=${WXWIDGETS_USE_STL}
         -DwxUSE_STD_CONTAINERS=${WXWIDGETS_USE_STD_CONTAINERS}
         -DwxUSE_UIACTIONSIMULATOR=OFF
@@ -138,13 +137,13 @@ if(NOT EXISTS "${CURRENT_PACKAGES_DIR}/include/wx/setup.h")
     file(GLOB_RECURSE WX_SETUP_H_FILES_REL "${CURRENT_PACKAGES_DIR}/lib/*.h")
 
     if(NOT DEFINED VCPKG_BUILD_TYPE OR VCPKG_BUILD_TYPE STREQUAL "release")
-        vcpkg_replace_string("${WX_SETUP_H_FILES_REL}" "${CURRENT_PACKAGES_DIR}" "")
+        vcpkg_replace_string("${WX_SETUP_H_FILES_REL}" "${CURRENT_PACKAGES_DIR}" "" IGNORE_UNCHANGED)
 
         string(REPLACE "${CURRENT_PACKAGES_DIR}/lib/" "" WX_SETUP_H_FILES_REL "${WX_SETUP_H_FILES_REL}")
         string(REPLACE "/setup.h" "" WX_SETUP_H_REL_RELATIVE "${WX_SETUP_H_FILES_REL}")
     endif()
     if(NOT DEFINED VCPKG_BUILD_TYPE OR VCPKG_BUILD_TYPE STREQUAL "debug")
-        vcpkg_replace_string("${WX_SETUP_H_FILES_DBG}" "${CURRENT_PACKAGES_DIR}" "")
+        vcpkg_replace_string("${WX_SETUP_H_FILES_DBG}" "${CURRENT_PACKAGES_DIR}" "" IGNORE_UNCHANGED)
 
         string(REPLACE "${CURRENT_PACKAGES_DIR}/debug/lib/" "" WX_SETUP_H_FILES_DBG "${WX_SETUP_H_FILES_DBG}")
         string(REPLACE "/setup.h" "" WX_SETUP_H_DBG_RELATIVE "${WX_SETUP_H_FILES_DBG}")
@@ -190,4 +189,4 @@ endif()
 configure_file("${CMAKE_CURRENT_LIST_DIR}/vcpkg-cmake-wrapper.cmake" "${CURRENT_PACKAGES_DIR}/share/${PORT}/vcpkg-cmake-wrapper.cmake" @ONLY)
 
 file(INSTALL "${CMAKE_CURRENT_LIST_DIR}/usage" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}")
-file(INSTALL "${SOURCE_PATH}/docs/licence.txt" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}" RENAME copyright)
+vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/docs/licence.txt")

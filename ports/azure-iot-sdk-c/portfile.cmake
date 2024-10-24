@@ -1,28 +1,16 @@
 vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
 
-if("public-preview" IN_LIST FEATURES)
-    vcpkg_from_github(
-        OUT_SOURCE_PATH SOURCE_PATH
-        REPO Azure/azure-iot-sdk-c
-        REF cb2e8d390df56ffa31d08ca0a79ab58ff96160cc
-        SHA512 6798b17d6768b3ccbd0eb66719b50f364cd951736eb71110e2dc9deca054a1566ff88b9e8c5e9b52536e4308cad6cd3cbebff3282c123083e3afaee5535e724b
-        HEAD_REF public-preview
-        PATCHES
-            improve-external-deps-preview.patch
-    )
-else()
-    vcpkg_from_github(
-        OUT_SOURCE_PATH SOURCE_PATH
-        REPO Azure/azure-iot-sdk-c
-        REF 3fd808bee3c88f8578dcc30c0a6d1d396c172070
-        SHA512 2ee26791aca7732d21fe91cbb51be35d1589161d1d7b54542ac1a1277f1a95eb7e1d5ced7be117ce326dd118169e20ffc6bcd0ea9fd8ac9442bd466bc048f1ea
-        HEAD_REF master
-        PATCHES
-            fix-install-location.patch
-            improve-external-deps.patch
-            fix-iothubclient-includes.patch
-    )
-endif()
+vcpkg_from_github(
+    OUT_SOURCE_PATH SOURCE_PATH
+    REPO Azure/azure-iot-sdk-c
+    REF 9c70f98b7b659e169ae44389a5142f3a386c5791
+    SHA512 ba00534f9881f0be260008c13b91f87285690c11b2a6ca0b94b2f73bbe6dcf60433382b45df9f42340b121f846bc66a621672fdfa18323227600d031d99bb3cd
+    HEAD_REF master
+    PATCHES
+        fix-install-location.patch
+        improve-external-deps.patch
+        fix-iothubclient-includes.patch
+)
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
     FEATURES

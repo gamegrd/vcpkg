@@ -1,10 +1,15 @@
 {
   "name": "vtk-dicom",
-  "version": "0.8.14",
+  "version": "0.8.16",
   "description": "DICOM for VTK",
   "homepage": "https://github.com/dgobbi/vtk-dicom",
   "license": "BSD-3-Clause",
   "dependencies": [
+    {
+      "name": "python3",
+      "host": true,
+      "default-features": false
+    },
     {
       "name": "vcpkg-cmake",
       "host": true

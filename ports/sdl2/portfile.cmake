@@ -1,12 +1,13 @@
-vcpkg_minimum_required(VERSION 2022-10-12) # for ${VERSION}
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO libsdl-org/SDL
-    REF release-${VERSION}
-    SHA512 86620a8f24e054a47e53435ed620bde2c7fb8ffd7db99dcd8a91bac70ea733163b95ae3b77b04d1ef5f098730dfd385cf4bcf85f45d5234cddd7c9581b513af4
+    REF "release-${VERSION}"
+    SHA512 94ec7dba63b275545a6c3ab10cfe9feeb0a752ee46ff5e0083e0faa37097e1225a4efa060ca2acebf8d67ff192f06f18afc782891b190f6c0a561932575e8e50
     HEAD_REF main
     PATCHES
         deps.patch
+        alsa-dep-fix.patch
+        cxx-linkage-pkgconfig.diff
 )
 
 string(COMPARE EQUAL "${VCPKG_LIBRARY_LINKAGE}" "static" SDL_STATIC)
@@ -15,10 +16,13 @@ string(COMPARE EQUAL "${VCPKG_CRT_LINKAGE}" "static" FORCE_STATIC_VCRT)
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
     FEATURES
-        vulkan   SDL_VULKAN
-        x11      SDL_X11
-        wayland  SDL_WAYLAND
+        alsa     SDL_ALSA
+        dbus     SDL_DBUS
+        ibus     SDL_IBUS
         samplerate SDL_LIBSAMPLERATE
+        vulkan   SDL_VULKAN
+        wayland  SDL_WAYLAND
+        x11      SDL_X11
 )
 
 if ("x11" IN_LIST FEATURES)
@@ -26,6 +30,9 @@ if ("x11" IN_LIST FEATURES)
 endif()
 if ("wayland" IN_LIST FEATURES)
     message(WARNING "You will need to install Wayland dependencies to use feature wayland:\nsudo apt install libwayland-dev libxkbcommon-dev libegl1-mesa-dev\n")
+endif()
+if ("ibus" IN_LIST FEATURES)
+    message(WARNING "You will need to install ibus dependencies to use feature ibus:\nsudo apt install libibus-1.0-dev\n")
 endif()
 
 if(VCPKG_TARGET_IS_UWP)
@@ -41,8 +48,7 @@ vcpkg_cmake_configure(
         -DSDL_FORCE_STATIC_VCRT=${FORCE_STATIC_VCRT}
         -DSDL_LIBC=ON
         -DSDL_TEST=OFF
-        -DSDL_IBUS=OFF
-        -DSDL_INSTALL_CMAKEDIR="cmake"
+        -DSDL_INSTALL_CMAKEDIR=cmake
         -DCMAKE_DISABLE_FIND_PACKAGE_Git=ON
         -DSDL_LIBSAMPLERATE_SHARED=OFF
     MAYBE_UNUSED_VARIABLES
@@ -83,7 +89,7 @@ if(VCPKG_TARGET_IS_WINDOWS AND NOT VCPKG_TARGET_IS_UWP AND NOT VCPKG_TARGET_IS_M
 
     file(GLOB SHARE_FILES "${CURRENT_PACKAGES_DIR}/share/sdl2/*.cmake")
     foreach(SHARE_FILE ${SHARE_FILES})
-        vcpkg_replace_string("${SHARE_FILE}" "lib/SDL2main" "lib/manual-link/SDL2main")
+        vcpkg_replace_string("${SHARE_FILE}" "lib/SDL2main" "lib/manual-link/SDL2main" IGNORE_UNCHANGED)
     endforeach()
 endif()
 
@@ -96,10 +102,10 @@ file(STRINGS "${SOURCE_PATH}/CMakeLists.txt" DYLIB_CURRENT_VERSION REGEX ${DYLIB
 string(REGEX REPLACE ${DYLIB_COMPATIBILITY_VERSION_REGEX} "\\1" DYLIB_COMPATIBILITY_VERSION "${DYLIB_COMPATIBILITY_VERSION}")
 string(REGEX REPLACE ${DYLIB_CURRENT_VERSION_REGEX} "\\1" DYLIB_CURRENT_VERSION "${DYLIB_CURRENT_VERSION}")
 
-if(NOT DEFINED VCPKG_BUILD_TYPE OR VCPKG_BUILD_TYPE STREQUAL "debug")
-    vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/debug/lib/pkgconfig/sdl2.pc" "-lSDL2main" "-lSDL2maind")
-    vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/debug/lib/pkgconfig/sdl2.pc" "-lSDL2 " "-lSDL2d ")
-    vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/debug/lib/pkgconfig/sdl2.pc" "-lSDL2-static " "-lSDL2-staticd ")
+if(NOT DEFINED VCPKG_BUILD_TYPE OR VCPKG_BUILD_TYPE STREQUAL "debug" AND NOT VCPKG_TARGET_IS_ANDROID)
+    vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/debug/lib/pkgconfig/sdl2.pc" "-lSDL2main" "-lSDL2maind" IGNORE_UNCHANGED)
+    vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/debug/lib/pkgconfig/sdl2.pc" "-lSDL2 " "-lSDL2d " IGNORE_UNCHANGED)
+    vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/debug/lib/pkgconfig/sdl2.pc" "-lSDL2-static " "-lSDL2-staticd " IGNORE_UNCHANGED)
 endif()
 
 if(VCPKG_LIBRARY_LINKAGE STREQUAL "dynamic" AND VCPKG_TARGET_IS_WINDOWS AND NOT VCPKG_TARGET_IS_MINGW)

@@ -1,50 +1,41 @@
-set(PATCHES 0001-fix-for-vcpkg.patch)
-
-if(VCPKG_TARGET_IS_UWP)
-    list(APPEND PATCHES uwp-warnings.patch)
-endif()
-
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO paullouisageneau/libdatachannel
-    REF 2c6ef2053c6d28a66c16d0dae54e432750753575 #v0.17.11
-    SHA512 b65cff5a7cb274fe4651c2cd395533c50eb2959192596e6ac7017af40c93d75cbc83ad86f8810e728b33d8d0b5993eddba4eac8644a603c5e641bf7cc4b87425
+    REF "v${VERSION}"
+    SHA512 fd0d66bb932e29abc01e9f1a8b16ccb79012a7e3901e2e0f882f56ab2f090260945e1556c85ad07ef897b8c70fcdd44cdeead9955a9bca7afe1dda8900c473cc
     HEAD_REF master
-    PATCHES
-        ${PATCHES}
+    PATCHES 
+        dependencies.diff
+        library-linkage.diff
+        uwp-warnings.patch
 )
 
 vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
     FEATURES
         stdcall CAPI_STDCALL
     INVERTED_FEATURES
-        ws NO_WEBSOCKET
-        srtp NO_MEDIA
+        ws      NO_WEBSOCKET
+        srtp    NO_MEDIA
 )
 
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
         ${FEATURE_OPTIONS}
-        -DUSE_SYSTEM_SRTP=ON
-        -DUSE_SYSTEM_JUICE=ON
+        -DPREFER_SYSTEM_LIB=ON
         -DNO_EXAMPLES=ON
         -DNO_TESTS=ON
 )
 
 vcpkg_cmake_install()
-
-vcpkg_cmake_config_fixup(PACKAGE_NAME LibDataChannel CONFIG_PATH lib/cmake/LibDataChannel)
+vcpkg_cmake_config_fixup(CONFIG_PATH lib/cmake/LibDataChannel)
 vcpkg_fixup_pkgconfig()
 
-file(READ "${CURRENT_PACKAGES_DIR}/share/LibDataChannel/LibDataChannelConfig.cmake" DATACHANNEL_CONFIG)
-file(WRITE "${CURRENT_PACKAGES_DIR}/share/LibDataChannel/LibDataChannelConfig.cmake" "
-include(CMakeFindDependencyMacro)
-find_dependency(Threads)
-find_dependency(OpenSSL)
-find_dependency(LibJuice)
-${DATACHANNEL_CONFIG}")
+if(VCPKG_LIBRARY_LINKAGE STREQUAL "static")
+    vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/include/rtc/common.hpp" "#ifdef RTC_STATIC" "#if 1")
+    vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/include/rtc/rtc.h" "#ifdef RTC_STATIC" "#if 1")
+endif()
 
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include" "${CURRENT_PACKAGES_DIR}/debug/share")
 
-file(INSTALL "${SOURCE_PATH}/LICENSE" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}" RENAME copyright)
+vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/LICENSE")

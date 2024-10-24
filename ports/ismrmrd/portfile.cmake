@@ -5,8 +5,8 @@ endif()
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO ismrmrd/ismrmrd
-    REF v1.13.0
-    SHA512 4654c416f7acc4e2da2616216706ff3dc98a9b8afbdf38c990a792ad681ce0e95eab8e3b382ad266d67f7b808fb86cc32f2f7b3d950e10e1a1473de38acb8104
+    REF "v${VERSION}"
+    SHA512 4bf3fbab89436636c64e4917d09117134f4d1c6446bae7ef570e0af5850998f066d881f45c414f40e1d1be942f34fda6836a1b3e4cb5ec904f9ecf2a432964c1
     HEAD_REF master
     PATCHES
         ${WIN32_INCLUDE_STDDEF_PATCH}
@@ -16,7 +16,6 @@ vcpkg_from_github(
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
-        -DUSE_SYSTEM_PUGIXML=ON
         -DUSE_HDF5_DATASET_SUPPORT=ON
         -DVCPKG_TARGET_TRIPLET=ON
         -DBUILD_TESTS=OFF

@@ -1,11 +1,16 @@
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
-    REPO  strukturag/libheif 
-    REF e04d8864b8778605f00e3bf0f2c1cea65abd60f2 #v1.14.2
-    SHA512 42d10500f7b1176fc6bd6afa783610a9a5b5be3db5c9b4d68b1102823153aee6f22194f8394e6c6a37df75e19f01e301dde783658067f67899410e8de07d19b5
+    REPO  strukturag/libheif
+    REF "v${VERSION}"
+    SHA512 0fcb6340694d5f30a355a0e1224bdbcb35d898594739ffd767cc882842887011a418aa67df08b8cdccc06fa2e477768de90704c8d6f5a827f6878252a13c7734
     HEAD_REF master
     PATCHES
         gdk-pixbuf.patch
+)
+
+vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
+    FEATURES
+        hevc    WITH_X265
 )
 
 vcpkg_cmake_configure(
@@ -13,15 +18,16 @@ vcpkg_cmake_configure(
     OPTIONS
         -DWITH_EXAMPLES=OFF
         -DWITH_DAV1D=OFF
+        ${FEATURE_OPTIONS}
 )
 vcpkg_cmake_install()
 vcpkg_copy_pdbs()
 
 vcpkg_cmake_config_fixup(CONFIG_PATH lib/cmake/libheif/)
 # libheif's pc file assumes libstdc++, which isn't always true.
-vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/lib/pkgconfig/libheif.pc" " -lstdc++" "")
+vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/lib/pkgconfig/libheif.pc" " -lstdc++" "" IGNORE_UNCHANGED)
 if(NOT VCPKG_BUILD_TYPE)
-    vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/debug/lib/pkgconfig/libheif.pc" " -lstdc++" "")
+    vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/debug/lib/pkgconfig/libheif.pc" " -lstdc++" "" IGNORE_UNCHANGED)
 endif()
 vcpkg_fixup_pkgconfig()
 
@@ -36,4 +42,6 @@ file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/share")
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/lib/libheif" "${CURRENT_PACKAGES_DIR}/debug/lib/libheif")
 
-file(INSTALL "${SOURCE_PATH}/COPYING" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}" RENAME copyright)
+vcpkg_replace_string("${CURRENT_PACKAGES_DIR}/include/libheif/heif_version.h" "#define LIBHEIF_PLUGIN_DIRECTORY \"${CURRENT_PACKAGES_DIR}/lib/libheif\"" "")
+
+vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/COPYING")

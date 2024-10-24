@@ -1,12 +1,11 @@
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO c-ares/c-ares
-    REF cares-1_18_1
-    SHA512 9f5f9d5a22a4643aef8701c4abfd4b28e0bded2479bab462d2dfc63a8f84348f02d3cfbd7c85cc1e06a154a3e4206721cb6669c7c61538ecdcd44268e4ce073e
+    REF "v${VERSION}"
+    SHA512 55494967123fc6be82ab89d08f28c5e9cdf5937751599076ce459dab61685b6a1b9bd7a74e882ee0f92634f81f8d80f10d4fe481dd5a79159e38525f83488403
     HEAD_REF main
     PATCHES
         avoid-docs.patch
-        guard-imported-lib.patch
 )
 
 string(COMPARE EQUAL "${VCPKG_LIBRARY_LINKAGE}" "static" BUILD_STATIC)
@@ -32,7 +31,7 @@ vcpkg_fixup_pkgconfig()
 if(VCPKG_LIBRARY_LINKAGE STREQUAL "static")
     vcpkg_replace_string(
         "${CURRENT_PACKAGES_DIR}/include/ares.h"
-        "#ifdef CARES_STATICLIB" "#if 1"
+        "#  ifdef CARES_STATICLIB" "#if 1"
     )
 endif()
 
@@ -42,4 +41,4 @@ endif()
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include" "${CURRENT_PACKAGES_DIR}/debug/share")
 
 file(INSTALL "${CMAKE_CURRENT_LIST_DIR}/usage" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}")
-file(INSTALL "${SOURCE_PATH}/LICENSE.md" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}" RENAME copyright)
+vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/LICENSE.md")
